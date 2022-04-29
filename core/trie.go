@@ -14,6 +14,7 @@ type node struct {
 	segment  string
 	handlers []ControllerHandler
 	childs   []*node
+	parent   *node
 }
 
 func (n *node) filterChildNodes(segment string) []*node {
@@ -75,6 +76,23 @@ func (n *node) findChildNode(segment string) *node {
 	return nil
 }
 
+func (n *node) parseParamsFromEndNode(uri string) map[string]string {
+	ret := make(map[string]string)
+	segments := strings.Split(uri, "/")
+
+	cur := n
+	for i := len(segments) - 1; i >= 0; i-- {
+		if cur.segment == "" {
+			break
+		}
+		if isWildSegment(cur.segment) {
+			ret[cur.segment[1:]] = segments[i]
+		}
+		cur = cur.parent
+	}
+	return ret
+}
+
 func NewTree() *Tree {
 	return &Tree{
 		root: &node{},
@@ -102,6 +120,7 @@ func (t *Tree) AddRouter(uri string, handlers []ControllerHandler) error {
 			n = cnode
 		} else {
 			newNode := &node{segment: segment}
+			newNode.parent = n
 			if isLast {
 				newNode.isLast = isLast
 				newNode.handlers = handlers
@@ -114,11 +133,20 @@ func (t *Tree) AddRouter(uri string, handlers []ControllerHandler) error {
 }
 
 func (t *Tree) FindHandler(uri string) []ControllerHandler {
-	mathNode := t.root.matchNode(uri)
-	if mathNode == nil {
+	matchNode := t.root.matchNode(uri)
+	if matchNode == nil {
 		return nil
 	}
-	return mathNode.handlers
+	return matchNode.handlers
+}
+
+func (t *Tree) FindNode(uri string) *node {
+	matchNode := t.root.matchNode(uri)
+	if matchNode == nil {
+		return nil
+	}
+
+	return matchNode
 }
 
 func isWildSegment(segment string) bool {

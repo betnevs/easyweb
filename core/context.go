@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,6 +20,8 @@ type Context struct {
 	// 标记 handler 处理是否超时
 	hasStopped int32
 	writeMutex *sync.Mutex
+
+	params map[string]string
 }
 
 func NewContext(request *http.Request, response http.ResponseWriter) *Context {
@@ -48,8 +49,8 @@ func (ctx *Context) SetHasStopped() {
 	atomic.AddInt32(&ctx.hasStopped, 1)
 }
 
-func (ctx *Context) HasStopped() int32 {
-	return atomic.LoadInt32(&ctx.hasStopped)
+func (ctx *Context) HasStopped() bool {
+	return atomic.LoadInt32(&ctx.hasStopped) == 1
 }
 
 func (ctx *Context) BaseContext() context.Context {
@@ -72,89 +73,6 @@ func (ctx *Context) Value(key interface{}) interface{} {
 	return ctx.BaseContext().Value(key)
 }
 
-func (ctx *Context) QueryAll() map[string][]string {
-	if ctx.request != nil {
-		return ctx.request.URL.Query()
-	}
-	return map[string][]string{}
-}
-
-func (ctx *Context) QueryInt(key string, def int) int {
-	params := ctx.QueryAll()
-	if vals, ok := params[key]; ok {
-		l := len(vals)
-		if l > 0 {
-			intval, err := strconv.Atoi(vals[l-1])
-			if err != nil {
-				return def
-			}
-			return intval
-		}
-	}
-	return def
-}
-
-func (ctx *Context) QueryString(key string, def string) string {
-	params := ctx.QueryAll()
-	if vals, ok := params[key]; ok {
-		l := len(vals)
-		if l > 0 {
-			return vals[l-1]
-		}
-	}
-	return def
-}
-
-func (ctx *Context) QueryArray(key string, def []string) []string {
-	params := ctx.QueryAll()
-	if vals, ok := params[key]; ok {
-		return vals
-	}
-	return def
-}
-
-func (ctx *Context) FormAll() map[string][]string {
-	if ctx.request != nil {
-		ctx.request.ParseForm()
-		return ctx.request.PostForm
-	}
-	return map[string][]string{}
-}
-
-func (ctx *Context) FormInt(key string, def int) int {
-	params := ctx.FormAll()
-	if vals, ok := params[key]; ok {
-		l := len(params)
-		if l > 0 {
-			intval, err := strconv.Atoi(vals[l-1])
-			if err != nil {
-				return def
-			}
-			return intval
-		}
-	}
-	return def
-}
-
-func (ctx *Context) FormString(key string, def string) string {
-	params := ctx.FormAll()
-	if vals, ok := params[key]; ok {
-		l := len(params)
-		if l > 0 {
-			return vals[l-1]
-		}
-	}
-	return def
-}
-
-func (ctx *Context) FormArray(key string, def []string) []string {
-	params := ctx.FormAll()
-	if vals, ok := params[key]; ok {
-		return vals
-	}
-	return def
-}
-
 func (ctx *Context) BindJSON(obj interface{}) error {
 	if ctx.request != nil {
 		body, err := ioutil.ReadAll(ctx.request.Body)
@@ -169,24 +87,6 @@ func (ctx *Context) BindJSON(obj interface{}) error {
 	} else {
 		return errors.New("ctx request empty")
 	}
-	return nil
-}
-
-func (ctx *Context) JSON(status int, obj interface{}) error {
-	ctx.WriteMutex().Lock()
-	defer ctx.WriteMutex().Unlock()
-	if ctx.HasStopped() != 0 {
-		return nil
-	}
-	byt, err := json.Marshal(obj)
-	if err != nil {
-		ctx.response.WriteHeader(http.StatusInternalServerError)
-		return err
-	}
-	// Header 必须在 WriteHeader 方法之前设置
-	ctx.response.Header().Set("Content-Type", "application/json")
-	ctx.response.WriteHeader(status)
-	ctx.response.Write(byt)
 	return nil
 }
 
@@ -206,14 +106,6 @@ func (ctx *Context) ExecPanic() {
 	ctx.response.Write([]byte("panic"))
 }
 
-func (ctx *Context) HTML(status int, obj interface{}, template string) error {
-	return nil
-}
-
-func (ctx *Context) Text(status int, obj string) error {
-	return nil
-}
-
 func (ctx *Context) Next() error {
 	ctx.index++
 	if ctx.index < len(ctx.handlers) {
@@ -226,4 +118,8 @@ func (ctx *Context) Next() error {
 
 func (ctx *Context) SetHandlers(handlers []ControllerHandler) {
 	ctx.handlers = handlers
+}
+
+func (ctx *Context) SetParams(params map[string]string) {
+	ctx.params = params
 }

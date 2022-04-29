@@ -10,7 +10,7 @@ func Recovery() core.ControllerHandler {
 	return func(ctx *core.Context) error {
 		defer func() {
 			if p := recover(); p != nil {
-				ctx.JSON(http.StatusInternalServerError, "INTERNAL ERROR")
+				ctx.SetStatus(http.StatusInternalServerError).JSON("INTERNAL ERROR")
 			}
 		}()
 		ctx.Next()

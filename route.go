@@ -1,8 +1,7 @@
 package main
 
 import (
-	"net/http"
-	"time"
+	"fmt"
 
 	"github.com/betNevS/easyhttp/core/middleware"
 
@@ -12,23 +11,14 @@ import (
 func RegisterRouter(c *core.Core) {
 	c.Use(middleware.Recovery())
 	c.Get("/user/login", middleware.Cost(), func(ctx *core.Context) error {
-		time.Sleep(time.Second)
-		ctx.JSON(http.StatusOK, "user login")
+		ctx.JSON("user login")
 		return nil
 	})
 
-	subApi := c.Group("/aa")
-	{
-		subApi.Use(middleware.Test2())
-		subApi.Get("/bb", func(c *core.Context) error {
-			c.JSON(http.StatusOK, "OK")
-			return nil
-		})
-
-		subApi.Get("/cc", func(c *core.Context) error {
-			c.JSON(http.StatusOK, "OK")
-			return nil
-		})
-	}
+	c.Get("/", func(ctx *core.Context) error {
+		fmt.Println(ctx.GetRequest().URL.Path)
+		ctx.JSON("xxxx")
+		return nil
+	})
 
 }

@@ -67,19 +67,32 @@ func (c *Core) FindRouteByRequest(request *http.Request) []ControllerHandler {
 	return nil
 }
 
+func (c *Core) FindRouteNodeByRequest(request *http.Request) *node {
+	uri := request.URL.Path
+	method := request.Method
+	upperMethod := strings.ToUpper(method)
+	if methodHandlers, ok := c.router[upperMethod]; ok {
+		return methodHandlers.FindNode(uri)
+	}
+	return nil
+}
+
 func (c *Core) ServeHTTP(response http.ResponseWriter, request *http.Request) {
 	ctx := NewContext(request, response)
 
-	handlers := c.FindRouteByRequest(request)
-	if handlers == nil {
-		ctx.JSON(http.StatusNotFound, "NOT FOUND ROUTER")
+	node := c.FindRouteNodeByRequest(request)
+	if node == nil {
+		ctx.SetStatus(http.StatusNotFound).JSON("NOT FOUND ROUTER")
 		return
 	}
 
-	ctx.SetHandlers(handlers)
+	ctx.SetHandlers(node.handlers)
+
+	params := node.parseParamsFromEndNode(request.URL.Path)
+	ctx.SetParams(params)
 
 	if err := ctx.Next(); err != nil {
-		ctx.JSON(http.StatusInternalServerError, "INNER ERROR")
+		ctx.SetStatus(http.StatusInternalServerError).JSON("INNER ERROR")
 		return
 	}
 }
