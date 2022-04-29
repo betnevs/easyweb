@@ -1,4 +1,4 @@
-# easyhttp
-An easy http framework.
+# easyweb
+An easy web framework.
 
 
