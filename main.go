@@ -1,10 +1,9 @@
 package main
 
 import (
+	"github.com/betNevS/easyweb/core"
 	"log"
 	"net/http"
-
-	"github.com/betNevS/easyhttp/core"
 )
 
 func main() {

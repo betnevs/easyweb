@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"github.com/betNevS/easyhttp/core/middleware"
+	"github.com/betNevS/easyweb/core/middleware"
 
-	"github.com/betNevS/easyhttp/core"
+	"github.com/betNevS/easyweb/core"
 )
 
 func RegisterRouter(c *core.Core) {

@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/betNevS/easyhttp/core"
+	"github.com/betNevS/easyweb/core"
 )
 
 func Recovery() core.ControllerHandler {

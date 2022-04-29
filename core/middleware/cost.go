@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/betNevS/easyhttp/core"
+	"github.com/betNevS/easyweb/core"
 )
 
 func Cost() core.ControllerHandler {

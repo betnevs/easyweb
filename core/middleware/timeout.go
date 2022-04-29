@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/betNevS/easyhttp/core"
+	"github.com/betNevS/easyweb/core"
 )
 
 func Timeout(d time.Duration) core.ControllerHandler {

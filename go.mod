@@ -1,4 +1,4 @@
-module github.com/betNevS/easyhttp
+module github.com/betNevS/easyweb
 
 go 1.17
 

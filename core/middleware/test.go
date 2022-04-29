@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 
-	"github.com/betNevS/easyhttp/core"
+	"github.com/betNevS/easyweb/core"
 )
 
 func Test1() core.ControllerHandler {
